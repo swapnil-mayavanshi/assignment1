@@ -5,10 +5,7 @@ from pypdf import PdfReader
 import google.generativeai as genai
 
 # --- CONFIGURATION ---
-# 1. Get your free key here: https://aistudio.google.com/app/apikey
-API_KEY = "your_actual_api_key_here"
-# 2. Select the Model
-# "gemini-2.0-flash" is the latest. If it gives an error, try "gemini-1.5-flash"
+API_KEY = "you-api-key-here"
 MODEL_NAME = "gemini-2.0-flash" 
 
 # --- 1. FILE READING ---
@@ -26,7 +23,7 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error reading PDF: {e}")
         return None
 
-# --- 2. QUERY GEMINI (The New Logic) ---
+# --- 2. QUERY GEMINI ---
 def query_gemini_for_structured_data(text_content):
     """
     Sends text to Google Gemini 2.0 Flash to get perfect JSON.
@@ -35,10 +32,8 @@ def query_gemini_for_structured_data(text_content):
         print("❌ Error: You forgot to paste your Google API Key in the code!")
         return None
 
-    # Configure the library
     genai.configure(api_key=API_KEY)
     
-    # Create the model config
     generation_config = {
         "temperature": 0.1,
         "response_mime_type": "application/json", # Forces Gemini to output JSON
@@ -61,8 +56,6 @@ def query_gemini_for_structured_data(text_content):
 
     try:
         response = model.generate_content(text_content)
-        
-        # Parse the JSON response
         # Since we enforced JSON mode, response.text should be valid JSON.
         return json.loads(response.text)
 
@@ -77,25 +70,21 @@ def main():
     
     print(f"--- Processing {input_file} ---")
     
-    # 1. Read PDF
     raw_text = extract_text_from_pdf(input_file)
     if not raw_text:
         return
 
     print(f"Sending text to {MODEL_NAME}...")
     
-    # 2. Get Data from Gemini
     json_data = query_gemini_for_structured_data(raw_text)
 
     if json_data:
         print("✅ Data received! Generating Excel...")
         
-        # 3. Save to Excel
         df = pd.DataFrame(json_data)
         
-        # Organize columns cleanly
+        # Organize and filter columns
         cols = ["Category", "Key", "Value", "Comments"]
-        # Filter to ensure we only select columns that exist
         final_cols = [c for c in cols if c in df.columns]
         df = df[final_cols]
             
